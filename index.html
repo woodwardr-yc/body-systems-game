@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Systems Navigator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .hud-element {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: white;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        .modal {
+            background-color: rgba(10, 20, 40, 0.9);
+            border: 2px solid rgba(0, 255, 255, 0.7);
+        }
+        .modal-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .modal-button:hover {
+            background-color: rgba(0, 255, 255, 1);
+            color: #0a1428;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+        .level-card {
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            background-color: rgba(10, 20, 40, 0.8);
+            transition: all 0.3s ease;
+        }
+        .level-card:not(.disabled):hover {
+            border-color: rgba(0, 255, 255, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.2);
+        }
+        .level-card.disabled {
+            filter: grayscale(80%);
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white m-0 p-0">
+    <div id="gameContainer" class="relative w-screen h-screen">
+        
+        <!-- Main Menu / Level Select -->
+        <div id="mainMenu" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-900 p-8">
+            <div class="absolute top-6 right-6 flex space-x-4">
+                 <button id="ttsBtn" class="text-cyan-300 hover:text-white transition">
+                    <svg id="tts-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person-lines-fill" viewBox="0 0 16 16"><path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1zm2 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1zm-2 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1z"/></svg>
+                    <svg id="tts-muted-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person-dash-fill hidden" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11 7.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5"/><path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1z"/></svg>
+                </button>
+                <button id="muteBtn" class="text-cyan-300 hover:text-white transition">
+                    <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16">
+                        <path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/>
+                        <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/>
+                        <path d="M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+                    </svg>
+                     <svg id="speaker-muted-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-volume-mute-fill hidden" viewBox="0 0 16 16">
+                        <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <h1 class="text-5xl font-bold text-cyan-300 mb-4" style="text-shadow: 0 0 10px rgba(0,255,255,0.5);">Mission Select</h1>
+            <p class="text-lg text-gray-300 mb-12">Choose a body system to explore.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+                <!-- Level 1 Card -->
+                <div id="level1-card" class="level-card rounded-lg p-6 flex flex-col items-center text-center cursor-pointer">
+                    <h2 class="text-2xl font-bold text-red-400 mb-2">Level 1</h2>
+                    <h3 class="text-xl font-semibold text-white mb-4">Bloodstream Rapids</h3>
+                    <p class="text-gray-400 flex-grow">Navigate the circulatory system, dodge cholesterol, and learn about the heart, blood, and vessels.</p>
+                    <button onclick="startGame('circulatory')" class="mt-6 modal-button bg-cyan-500 text-black font-bold py-2 px-6 rounded-lg">Launch Mission</button>
+                </div>
+                <!-- Level 2 Card -->
+                <div id="level2-card" class="level-card rounded-lg p-6 flex flex-col items-center text-center cursor-pointer">
+                     <h2 class="text-2xl font-bold text-purple-400 mb-2">Level 2</h2>
+                     <h3 class="text-xl font-semibold text-white mb-4">Neuron Highway</h3>
+                     <p class="text-gray-400 flex-grow">Travel the nervous system, avoid signal blockers, and learn about the brain and neurons.</p>
+                     <button onclick="startGame('nervous')" class="mt-6 modal-button bg-cyan-500 text-black font-bold py-2 px-6 rounded-lg">Launch Mission</button>
+                </div>
+                 <!-- Level 3 Card -->
+                <div id="level3-card" class="level-card rounded-lg p-6 flex flex-col items-center text-center cursor-pointer">
+                     <h2 class="text-2xl font-bold text-green-400 mb-2">Level 3</h2>
+                     <h3 class="text-xl font-semibold text-white mb-4">Gastric Journey</h3>
+                     <p class="text-gray-400 flex-grow">Explore the digestive tract, survive stomach acid, and learn about how the body gets energy.</p>
+                     <button onclick="startGame('digestive')" class="mt-6 modal-button bg-cyan-500 text-black font-bold py-2 px-6 rounded-lg">Launch Mission</button>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" class="hidden w-full h-full"></canvas>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden absolute top-0 left-0 w-full p-4 flex justify-between">
+            <div id="score" class="hud-element">Score: 0</div>
+            <div class="hud-element">
+                <span>Shield:</span>
+                <div class="w-40 h-4 bg-gray-700 rounded-full inline-block align-middle ml-2">
+                    <div id="shieldBar" class="h-full bg-cyan-400 rounded-full" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modals -->
+        <div id="knowledgeGate" class="hidden absolute inset-0 z-10 flex items-center justify-center">
+            <div class="modal w-full max-w-2xl p-8 rounded-lg shadow-2xl text-center">
+                <div class="flex items-center justify-center mb-4">
+                    <h2 class="text-2xl font-bold text-cyan-300">Knowledge Gate</h2>
+                    <button id="readQuestionBtn" class="hidden ml-4 text-cyan-300 hover:text-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"><path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/><path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/><path d="M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/></svg>
+                    </button>
+                </div>
+                <p id="questionText" class="text-lg mb-6"></p>
+                <div id="answerButtons" class="grid grid-cols-2 gap-4"></div>
+                <p id="feedbackText" class="mt-4 text-lg font-semibold"></p>
+                <div id="expert-controls" class="hidden mt-4">
+                     <p class="text-md text-gray-300 mb-2">Would you like an explanation?</p>
+                     <button id="askExpertBtn" class="modal-button bg-purple-600 text-white py-2 px-4 rounded-lg">Ask the Expert</button>
+                     <button id="continueBtn" class="modal-button bg-gray-600 text-white py-2 px-4 rounded-lg ml-2">Continue</button>
+                </div>
+                 <div id="expert-response" class="hidden mt-4 p-4 bg-gray-900 rounded-lg border border-purple-500 text-left">
+                     <p id="expert-text" class="text-gray-200"></p>
+                     <button id="closeExpertBtn" class="modal-button bg-gray-600 text-white py-2 px-4 rounded-lg mt-4">Continue Mission</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center">
+             <div class="modal w-full max-w-md p-8 rounded-lg shadow-2xl text-center">
+                <h2 id="gameOverTitle" class="text-4xl font-bold mb-2 text-red-500">Mission Failed</h2>
+                <p id="gameOverText" class="text-lg mb-6">Your Bio-Pod has been damaged beyond repair.</p>
+                <p id="finalScore" class="text-xl mb-6">Final Score: 0</p>
+                <div id="end-game-buttons">
+                    <button id="debriefBtn" class="modal-button bg-purple-600 text-white py-2 px-4 rounded-lg">Generate Mission Debrief</button>
+                    <button onclick="returnToMenu()" class="modal-button bg-gray-600 text-white py-2 px-4 rounded-lg ml-2">Return to Menu</button>
+                </div>
+                 <div id="debrief-response" class="hidden mt-4 p-4 bg-gray-900 rounded-lg border border-purple-500 text-left">
+                    <p id="debrief-text" class="text-gray-200"></p>
+                    <button onclick="returnToMenu()" class="modal-button bg-gray-600 text-white py-2 px-4 rounded-lg mt-4">Return to Menu</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // --- UI Elements ---
+        const mainMenu = document.getElementById('mainMenu');
+        const hud = document.getElementById('hud');
+        const scoreEl = document.getElementById('score');
+        const shieldBar = document.getElementById('shieldBar');
+        const knowledgeGate = document.getElementById('knowledgeGate');
+        const questionText = document.getElementById('questionText');
+        const answerButtons = document.getElementById('answerButtons');
+        const feedbackText = document.getElementById('feedbackText');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScore = document.getElementById('finalScore');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverText = document.getElementById('gameOverText');
+        
+        // --- Gemini API Elements ---
+        const expertControls = document.getElementById('expert-controls');
+        const askExpertBtn = document.getElementById('askExpertBtn');
+        const continueBtn = document.getElementById('continueBtn');
+        const expertResponse = document.getElementById('expert-response');
+        const expertText = document.getElementById('expert-text');
+        const closeExpertBtn = document.getElementById('closeExpertBtn');
+        const debriefBtn = document.getElementById('debriefBtn');
+        const debriefResponse = document.getElementById('debrief-response');
+        const debriefText = document.getElementById('debrief-text');
+        const endGameButtons = document.getElementById('end-game-buttons');
+
+        // --- Game State ---
+        let score, shield, gameState, player, keys, obstacles, dataPackets, backgroundParticles;
+        let animationFrameId;
+        let currentLevelKey;
+        let currentLevel;
+        let currentQuestion;
+        let isAudioReady = false;
+
+        // --- Tone.js Sound System ---
+        const sound = {
+            isMuted: false,
+            synths: {},
+            init: function() {
+                this.synths.click = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination();
+                this.synths.collect = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+                this.synths.damage = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination();
+                this.synths.correct = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.05, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination();
+                this.synths.wrong = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination();
+                isAudioReady = true;
+            },
+            playSound: function(name) {
+                if (this.isMuted || !isAudioReady) return;
+                try {
+                    if (name === 'click') this.synths.click.triggerAttackRelease('C5', '16n');
+                    else if (name === 'collect') this.synths.collect.triggerAttackRelease('E6', '16n');
+                    else if (name === 'damage') this.synths.damage.triggerAttackRelease('0.1');
+                    else if (name === 'correct') this.synths.correct.triggerAttackRelease('G5', '8n');
+                    else if (name === 'wrong') this.synths.wrong.triggerAttackRelease('C3', '4n');
+                } catch (e) { console.error("Sound play error:", e); }
+            },
+            toggleMute: function() {
+                this.isMuted = !this.isMuted;
+                document.getElementById('speaker-icon').classList.toggle('hidden', this.isMuted);
+                document.getElementById('speaker-muted-icon').classList.toggle('hidden', !this.isMuted);
+            }
+        };
+        
+        // --- TTS System ---
+        const tts = {
+            isTtsEnabled: false,
+            speak: function(text) {
+                if (!this.isTtsEnabled || !('speechSynthesis' in window)) return;
+                this.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(utterance);
+            },
+            cancel: function() {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            },
+            toggle: function() {
+                this.isTtsEnabled = !this.isTtsEnabled;
+                if (!this.isTtsEnabled) this.cancel();
+                document.getElementById('tts-icon').classList.toggle('hidden', this.isTtsEnabled);
+                document.getElementById('tts-muted-icon').classList.toggle('hidden', !this.isTtsEnabled);
+            }
+        };
+
+        document.getElementById('muteBtn').addEventListener('click', () => {
+             if (!isAudioReady) {
+                Tone.start().then(() => {
+                    sound.init();
+                });
+            }
+            sound.toggleMute();
+        });
+        
+        document.getElementById('ttsBtn').addEventListener('click', () => tts.toggle());
+        
+        const levels = {
+            circulatory: {
+                 name: "Bloodstream Rapids",
+                 shipType: 'nanoExplorer',
+                 theme: {
+                    bgGradient: ['#4a1113', '#6b1a1d', '#4a1113'],
+                    wallColor: 'rgba(0, 0, 0, 0.15)',
+                    particleColors: ['rgba(255, 60, 60, 0.7)', 'rgba(220, 40, 40, 0.5)'],
+                    obstacleColors: { cholesterol: '#facc15', virus: '#a855f7' },
+                    dataPacketColor: 'rgba(0, 255, 255, 0.8)',
+                    dataPacketBorder: 'white'
+                },
+                questions: [
+                     { question: "Which of these is NOT a primary part of the circulatory system?", answers: ["Heart", "Lungs", "Blood Vessels", "Blood"], correct: 1 },
+                     { question: "These blood vessels are responsible for carrying blood AWAY from the heart.", answers: ["Veins", "Capillaries", "Arteries", "Chambers"], correct: 2 },
+                     { question: "Which type of blood vessel returns blood to the heart from around the body?", answers: ["Arteries", "Aorta", "Veins", "Capillaries"], correct: 2 },
+                     { question: "What is the main job of capillaries?", answers: ["Pump blood", "Deliver oxygen to cells", "Fight infections", "Carry blood to the heart"], correct: 1 },
+                     { question: "How many chambers does the human heart have?", answers: ["One", "Two", "Three", "Four"], correct: 3 },
+                     { question: "Which part of the blood is primarily responsible for fighting infections?", answers: ["Red Blood Cells", "Plasma", "Platelets", "White Blood Cells"], correct: 3 },
+                     { question: "What is another name for the circulatory system?", answers: ["Respiratory System", "Nervous System", "Cardiovascular System", "Digestive System"], correct: 2 }
+                ],
+                drawBackground: (theme) => {
+                    const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    bgGradient.addColorStop(0, theme.bgGradient[0]);
+                    bgGradient.addColorStop(0.5, theme.bgGradient[1]);
+                    bgGradient.addColorStop(1, theme.bgGradient[2]);
+                    ctx.fillStyle = bgGradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    const wallCellSize = 50;
+                    ctx.fillStyle = theme.wallColor;
+                    for(let i = -wallCellSize; i < canvas.width + wallCellSize; i += wallCellSize/2) {
+                        ctx.beginPath();
+                        ctx.arc(i, canvas.height * 0.05, wallCellSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(i, canvas.height * 0.95, wallCellSize, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                },
+                drawParticle: (p, theme) => { // Red blood cell
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = theme.particleColors[0];
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = theme.particleColors[1];
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                },
+                drawDataPacket: (p, theme) => {
+                    ctx.fillStyle = theme.dataPacketColor;
+                    ctx.strokeStyle = theme.dataPacketBorder;
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                    ctx.strokeRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                },
+                 drawObstacle: (o, theme) => {
+                    if (o.type === 'cholesterol') {
+                        ctx.fillStyle = theme.obstacleColors.cholesterol;
+                        ctx.strokeStyle = 'rgba(100, 80, 0, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(o.x, o.y - o.size / 2);
+                        for (let i = 1; i <= 6; i++) {
+                            const angle = i * Math.PI / 3;
+                            const xOffset = o.size / 2 * Math.sin(angle) * (0.8 + Math.random() * 0.4);
+                            const yOffset = -o.size / 2 * Math.cos(angle) * (0.8 + Math.random() * 0.4);
+                            ctx.lineTo(o.x + xOffset, o.y + yOffset);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    } else { // virus
+                        ctx.fillStyle = theme.obstacleColors.virus;
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(o.x, o.y, o.size/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        for (let i = 0; i < 8; i++) {
+                            const angle = i * Math.PI / 4;
+                            ctx.beginPath();
+                            ctx.moveTo(o.x, o.y);
+                            ctx.lineTo(o.x + Math.cos(angle) * o.size, o.y + Math.sin(angle) * o.size);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            },
+            nervous: {
+                 name: "Neuron Highway",
+                 shipType: 'synapseStriker',
+                 theme: {
+                    bgGradient: ['#0d0520', '#1b0a42', '#0d0520'],
+                    wallColor: 'rgba(0, 200, 255, 0.2)',
+                    particleColor: 'rgba(180, 180, 255, 0.3)',
+                    obstacleColors: { blocker: '#e11d48', field: 'rgba(255, 255, 0, 0.5)' },
+                    dataPacketColor: 'rgba(0, 255, 150, 1)'
+                 },
+                 questions: [
+                    { question: "What is the fundamental building block of the nervous system?", answers: ["The Brain Stem", "A Reflex", "A Neuron", "The Cerebrum"], correct: 2 },
+                    { question: "Which part of the brain controls coordinated, smooth muscle activity like balance?", answers: ["Hypothalamus", "Cerebrum", "Brain Stem", "Cerebellum"], correct: 3 },
+                    { question: "An automatic and fast response to a sensation, like pulling your hand from heat, is called a:", answers: ["Neuron", "Reflex", "Synapse", "Signal"], correct: 1 },
+                    { question: "Which part connects the brain to the spinal cord and controls heartbeat and breathing?", answers: ["The Cerebellum", "The Brain Stem", "The Hypothalamus", "The Cerebrum"], correct: 1 },
+                    { question: "Intelligence, memory, and personality are primarily associated with which part of the brain?", answers: ["The Cerebrum", "The Spinal Cord", "The Cerebellum", "The Brain Stem"], correct: 0 },
+                    { question: "What structure carries signals between the brain and the body and is protected by vertebrae?", answers: ["The Main Artery", "The Spinal Cord", "The Brain Stem", "A Nerve Cluster"], correct: 1 },
+                    { question: "Which part of the brain helps regulate body temperature, appetite, and the sleep cycle?", answers: ["The Hypothalamus", "The Frontal Lobe", "The Cerebellum", "The Cerebrum"], correct: 0 },
+                 ],
+                 drawBackground: (theme) => {
+                    const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    bgGradient.addColorStop(0, theme.bgGradient[0]);
+                    bgGradient.addColorStop(0.5, theme.bgGradient[1]);
+                    bgGradient.addColorStop(1, theme.bgGradient[2]);
+                    ctx.fillStyle = bgGradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = theme.wallColor;
+                    ctx.lineWidth = 3;
+                    const amplitude = 20;
+                    const frequency = 0.01;
+                    const time = Date.now() * 0.001;
+                    ctx.beginPath();
+                    ctx.moveTo(0, amplitude * Math.sin(time * 2));
+                    for(let x=0; x < canvas.width; x++) {
+                        ctx.lineTo(x, amplitude * Math.sin(x * frequency + time * 2));
+                    }
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, canvas.height + amplitude * Math.sin(time * 2));
+                     for(let x=0; x < canvas.width; x++) {
+                        ctx.lineTo(x, canvas.height - amplitude * Math.sin(x * frequency + time * 2));
+                    }
+                    ctx.stroke();
+                 },
+                 drawParticle: (p, theme) => { // Distant neuron
+                    ctx.globalAlpha = p.opacity;
+                    ctx.strokeStyle = theme.particleColor;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                     for(let i=0; i<3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        const angle = Math.random() * Math.PI * 2;
+                        const length = Math.random() * p.size/2 + p.size/2;
+                        ctx.lineTo(p.x + Math.cos(angle) * length, p.y + Math.sin(angle) * length);
+                        ctx.stroke();
+                     }
+                    ctx.globalAlpha = 1;
+                 },
+                 drawDataPacket: (p, theme) => { // Neurotransmitter
+                    ctx.save();
+                    ctx.fillStyle = theme.dataPacketColor;
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = theme.dataPacketColor;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                 },
+                 drawObstacle: (o, theme) => {
+                    if (o.type === 'blocker') {
+                        ctx.fillStyle = theme.obstacleColors.blocker;
+                        ctx.strokeStyle = 'rgba(255, 150, 150, 0.8)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(o.x + o.size / 2 * Math.cos(0), o.y + o.size / 2 * Math.sin(0));
+                        for(let i=1; i<=6; i++) {
+                            const angle = i * Math.PI / 3;
+                            const sizeMod = (i % 2 === 0) ? o.size / 2 : o.size / 4;
+                            ctx.lineTo(o.x + sizeMod * Math.cos(angle), o.y + sizeMod * Math.sin(angle));
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    } else { // field
+                        ctx.fillStyle = theme.obstacleColors.field;
+                        ctx.fillRect(o.x - o.size, o.y - o.size/2, o.size * 2, o.size);
+                        ctx.strokeStyle = 'yellow';
+                        ctx.lineWidth = 1;
+                        for(let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(o.x - o.size + Math.random() * o.size * 2, o.y - o.size/2);
+                            ctx.lineTo(o.x - o.size + Math.random() * o.size * 2, o.y + o.size/2);
+                            ctx.stroke();
+                        }
+                    }
+                 }
+            },
+            digestive: {
+                name: "Gastric Journey",
+                shipType: 'gastroHauler',
+                theme: {
+                    bgGradient: ['#582c0c', '#804014', '#582c0c'],
+                    wallColor: 'rgba(214, 137, 96, 0.3)',
+                    particleColor: 'rgba(180, 255, 180, 0.2)',
+                    obstacleColors: { acid: 'rgba(150, 255, 100, 0.4)', chunk: '#8B4513' },
+                    dataPacketColor: '#f97316' // Orange
+                 },
+                 questions: [
+                    { question: "Where does digestion primarily begin?", answers: ["The Stomach", "The Small Intestine", "The Mouth", "The Esophagus"], correct: 2 },
+                    { question: "What is the primary role of stomach acid?", answers: ["To absorb nutrients", "To break down food and kill bacteria", "To move food into the intestine", "To cool the body down"], correct: 1 },
+                    { question: "Which organ is mainly responsible for absorbing nutrients from digested food?", answers: ["The Liver", "The Esophagus", "The Large Intestine", "The Small Intestine"], correct: 3 },
+                    { question: "What is the muscular tube that connects the throat to the stomach?", answers: ["The Trachea", "The Aorta", "The Esophagus", "The Villi"], correct: 2 },
+                    { question: "What is the main function of the large intestine?", answers: ["To absorb water from remaining food", "To produce digestive enzymes", "To break down proteins", "To store bile"], correct: 0 },
+                 ],
+                 drawBackground: (theme) => {
+                    const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    bgGradient.addColorStop(0, theme.bgGradient[0]);
+                    bgGradient.addColorStop(0.5, theme.bgGradient[1]);
+                    bgGradient.addColorStop(1, theme.bgGradient[2]);
+                    ctx.fillStyle = bgGradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw stomach/intestine walls with villi texture
+                    ctx.fillStyle = theme.wallColor;
+                    const cellWidth = 20;
+                    const cellHeight = 40;
+                    for(let i=0; i < canvas.width; i += cellWidth) {
+                         // Top
+                        ctx.beginPath();
+                        ctx.ellipse(i + cellWidth/2, cellHeight/2, cellWidth/2, cellHeight/2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                         // Bottom
+                        ctx.beginPath();
+                        ctx.ellipse(i + cellWidth/2, canvas.height - cellHeight/2, cellWidth/2, cellHeight/2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                 },
+                 drawParticle: (p, theme) => { // Bubbles
+                    ctx.globalAlpha = p.opacity;
+                    ctx.strokeStyle = theme.particleColor;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                 },
+                 drawDataPacket: (p, theme) => { // Nutrient Molecule
+                    ctx.fillStyle = theme.dataPacketColor;
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x + p.size/2, p.y);
+                    for(let i = 1; i <= 6; i++) {
+                        const angle = i * Math.PI / 3;
+                        ctx.lineTo(p.x + p.size/2 * Math.cos(angle), p.y + p.size/2 * Math.sin(angle));
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                 },
+                 drawObstacle: (o, theme) => {
+                    if (o.type === 'chunk') {
+                        ctx.fillStyle = theme.obstacleColors.chunk;
+                        ctx.strokeStyle = 'rgba(60, 30, 0, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(o.x, o.y - o.size / 2);
+                        for (let i = 1; i <= 5; i++) {
+                            const angle = i * 2 * Math.PI / 5;
+                            const xOffset = o.size / 2 * Math.sin(angle) * (0.7 + Math.random() * 0.6);
+                            const yOffset = -o.size / 2 * Math.cos(angle) * (0.7 + Math.random() * 0.6);
+                            ctx.lineTo(o.x + xOffset, o.y + yOffset);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    } else { // acid
+                        ctx.fillStyle = theme.obstacleColors.acid;
+                        ctx.strokeStyle = 'rgba(50, 200, 50, 0.8)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(o.x, o.y, o.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        // Bubbles inside
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.arc(o.x + (Math.random() - 0.5) * o.size, o.y + (Math.random() - 0.5) * o.size, Math.random() * 5 + 2, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                    }
+                 }
+            }
+        };
+
+        // --- Ship Drawing Functions ---
+        function drawNanoExplorer(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            const thrusterGradient = ctx.createRadialGradient(-20, 0, 2, -30, 0, 20);
+            thrusterGradient.addColorStop(0, 'rgba(100, 200, 255, 0.8)');
+            thrusterGradient.addColorStop(1, 'rgba(0, 100, 255, 0)');
+            ctx.fillStyle = thrusterGradient;
+            ctx.fillRect(-40, -15, 30, 30);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.strokeStyle = '#a0a0a0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(20, 0);
+            ctx.quadraticCurveTo(10, -15, -10, -15);
+            ctx.lineTo(-25, -10);
+            ctx.lineTo(-25, 10);
+            ctx.lineTo(-10, 15);
+            ctx.quadraticCurveTo(10, 15, 20, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#80deea';
+            ctx.strokeStyle = '#006064';
+            ctx.beginPath();
+            ctx.arc(5, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawSynapseStriker(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            const thrusterGradient = ctx.createRadialGradient(-25, 0, 2, -40, 0, 15);
+            thrusterGradient.addColorStop(0, 'rgba(255, 150, 50, 0.9)');
+            thrusterGradient.addColorStop(1, 'rgba(255, 50, 0, 0)');
+            ctx.fillStyle = thrusterGradient;
+            ctx.fillRect(-50, -15, 40, 30);
+            ctx.fillStyle = '#424242';
+            ctx.strokeStyle = '#212121';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(30, 0);
+            ctx.lineTo(-10, -15);
+            ctx.lineTo(-25, -12);
+            ctx.lineTo(-25, 12);
+            ctx.lineTo(-10, 15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#d500f9';
+            ctx.strokeStyle = '#aa00c7';
+            ctx.beginPath();
+            ctx.moveTo(20, 0);
+            ctx.lineTo(10, -5);
+            ctx.lineTo(10, 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.strokeStyle = '#00e5ff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-10, -13);
+            ctx.lineTo(10, -3);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-10, 13);
+            ctx.lineTo(10, 3);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawGastroHauler(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            const thrusterGradient = ctx.createRadialGradient(-25, 0, 2, -35, 0, 18);
+            thrusterGradient.addColorStop(0, 'rgba(255, 255, 100, 0.9)');
+            thrusterGradient.addColorStop(1, 'rgba(255, 200, 0, 0)');
+            ctx.fillStyle = thrusterGradient;
+            ctx.fillRect(-45, -15, 30, 30);
+            ctx.fillStyle = '#fdd835';
+            ctx.strokeStyle = '#f57f17';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(15, -15);
+            ctx.lineTo(-20, -18);
+            ctx.lineTo(-25, 18);
+            ctx.lineTo(15, 15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.strokeStyle = '#424242';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-15, -18); ctx.lineTo(-15, 18);
+            ctx.moveTo(10, -15); ctx.lineTo(10, 15);
+            ctx.stroke();
+            ctx.fillStyle = '#80deea';
+            ctx.strokeStyle = '#006064';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(12, 0, 10, -Math.PI/2, Math.PI/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawPlayer(x, y) {
+            switch (currentLevel.shipType) {
+                case 'synapseStriker':
+                    drawSynapseStriker(x, y);
+                    break;
+                case 'gastroHauler':
+                    drawGastroHauler(x, y);
+                    break;
+                case 'nanoExplorer':
+                default:
+                    drawNanoExplorer(x, y);
+                    break;
+            }
+        }
+
+        function startGame(levelKey) {
+            sound.playSound('click');
+            currentLevelKey = levelKey;
+            currentLevel = levels[levelKey];
+            
+            mainMenu.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            hud.classList.remove('hidden');
+
+            score = 0;
+            shield = 100;
+            scoreEl.textContent = `Score: ${score}`;
+            shieldBar.style.width = shield + '%';
+            
+            currentLevel.questions.forEach(q => q.asked = false);
+
+            player = {
+                x: 100,
+                y: canvas.height / 2,
+                width: 60,
+                height: 30,
+                speed: 5
+            };
+            keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
+            obstacles = [];
+            dataPackets = [];
+            backgroundParticles = [];
+
+            for (let i = 0; i < 50; i++) {
+                createBackgroundParticle();
+                backgroundParticles[i].x = Math.random() * canvas.width;
+            }
+            
+            resizeCanvas();
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            update();
+            draw();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+            if (keys.ArrowUp || keys.w) player.y -= player.speed;
+            if (keys.ArrowDown || keys.s) player.y += player.speed;
+            if (keys.ArrowLeft || keys.a) player.x -= player.speed;
+            if (keys.ArrowRight || keys.d) player.x += player.speed;
+
+            player.y = Math.max(player.height / 2, Math.min(canvas.height - player.height / 2, player.y));
+            player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, player.x));
+
+            backgroundParticles.forEach(p => {
+                p.x -= p.speed;
+                if (p.x < -p.size) {
+                    p.x = canvas.width + p.size;
+                    p.y = Math.random() * canvas.height;
+                }
+            });
+
+            obstacles.forEach((o, index) => {
+                o.x -= o.speed;
+                if (o.x < -o.size * 2) {
+                    obstacles.splice(index, 1);
+                }
+                const dist = Math.hypot(player.x - o.x, player.y - o.y);
+                if (dist < player.width / 2 + o.size / 2) {
+                    obstacles.splice(index, 1);
+                    shield -= 25;
+                    sound.playSound('damage');
+                    shieldBar.style.width = shield + '%';
+                    if (shield <= 0) {
+                        endGame(false);
+                    }
+                }
+            });
+
+            dataPackets.forEach((p, index) => {
+                p.x -= p.speed;
+                if (p.x < -p.size) {
+                    dataPackets.splice(index, 1);
+                }
+                const dist = Math.hypot(player.x - p.x, player.y - p.y);
+                if (dist < player.width / 2 + p.size / 2) {
+                    dataPackets.splice(index, 1);
+                    score += 100;
+                    sound.playSound('collect');
+                    scoreEl.textContent = `Score: ${score}`;
+                    if (score > 0 && score % 1000 === 0) {
+                        triggerKnowledgeGate();
+                    }
+                }
+            });
+
+            if (Math.random() < 0.02) createObstacle();
+            if (Math.random() < 0.03) createDataPacket();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const theme = currentLevel.theme;
+            currentLevel.drawBackground(theme);
+            backgroundParticles.forEach(p => currentLevel.drawParticle(p, theme));
+            dataPackets.forEach(p => currentLevel.drawDataPacket(p, theme));
+            obstacles.forEach(o => currentLevel.drawObstacle(o, theme));
+            drawPlayer(player.x, player.y);
+        }
+
+        function createBackgroundParticle() {
+            const size = Math.random() * 40 + 20;
+            backgroundParticles.push({
+                x: canvas.width + size,
+                y: Math.random() * canvas.height,
+                size: size,
+                speed: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.5 + 0.2
+            });
+        }
+        function createObstacle() {
+            const size = Math.random() * 30 + 20;
+            let type;
+            if (currentLevel.name === "Neuron Highway") {
+                type = Math.random() < 0.5 ? 'blocker' : 'field';
+            } else if (currentLevel.name === "Gastric Journey") {
+                type = Math.random() < 0.5 ? 'acid' : 'chunk';
+            } else { // Circulatory
+                type = Math.random() < 0.5 ? 'cholesterol' : 'virus';
+            }
+            obstacles.push({
+                x: canvas.width + size,
+                y: Math.random() * canvas.height,
+                size: size,
+                speed: Math.random() * 3 + 2,
+                type: type
+            });
+        }
+        function createDataPacket() {
+            let size;
+             if (currentLevel.name === "Neuron Highway") {
+                size = 15;
+            } else if (currentLevel.name === "Gastric Journey") {
+                size = 25;
+            } else { // Circulatory
+                size = 20;
+            }
+            dataPackets.push({
+                x: canvas.width + size,
+                y: Math.random() * (canvas.height - 40) + 20,
+                size: size,
+                speed: 3
+            });
+        }
+       
+        function triggerKnowledgeGate() {
+            gameState = 'gate';
+            const availableQuestions = currentLevel.questions.filter(q => !q.asked);
+            if (availableQuestions.length === 0) {
+                endGame(true);
+                return;
+            }
+            
+            const qIndex = Math.floor(Math.random() * availableQuestions.length);
+            currentQuestion = availableQuestions[qIndex];
+            currentQuestion.asked = true;
+
+            questionText.textContent = currentQuestion.question;
+            let fullTextToSpeak = currentQuestion.question + ". ";
+
+            answerButtons.innerHTML = '';
+            currentQuestion.answers.forEach((answer, index) => {
+                fullTextToSpeak += `Option ${index + 1}: ${answer}. `;
+                const button = document.createElement('button');
+                button.textContent = answer;
+                button.className = 'modal-button bg-cyan-800 text-white p-4 rounded-lg text-left';
+                button.onclick = () => {
+                    tts.cancel();
+                    sound.playSound('click');
+                    checkAnswer(index);
+                }
+                answerButtons.appendChild(button);
+            });
+
+            const readQuestionBtn = document.getElementById('readQuestionBtn');
+            if (tts.isTtsEnabled) {
+                readQuestionBtn.classList.remove('hidden');
+                readQuestionBtn.onclick = () => tts.speak(fullTextToSpeak);
+            } else {
+                readQuestionBtn.classList.add('hidden');
+            }
+
+            feedbackText.textContent = '';
+            feedbackText.className = 'mt-4 text-lg font-semibold';
+            expertControls.classList.add('hidden');
+            expertResponse.classList.add('hidden');
+            knowledgeGate.classList.remove('hidden');
+        }
+
+        function checkAnswer(selectedIndex) {
+            Array.from(answerButtons.children).forEach(btn => btn.disabled = true);
+            if (selectedIndex === currentQuestion.correct) {
+                const feedback = 'Correct! Shield Boost!';
+                feedbackText.textContent = feedback;
+                feedbackText.classList.add('text-green-400');
+                sound.playSound('correct');
+                tts.speak(feedback);
+                shield = Math.min(100, shield + 25);
+                shieldBar.style.width = shield + '%';
+                setTimeout(resumeGame, 1500);
+            } else {
+                const feedback = 'Incorrect. Let\'s review.';
+                feedbackText.textContent = feedback;
+                feedbackText.classList.add('text-red-400');
+                sound.playSound('wrong');
+                tts.speak(feedback);
+                expertControls.classList.remove('hidden');
+            }
+        }
+        
+        function resumeGame() {
+            tts.cancel();
+            knowledgeGate.classList.add('hidden');
+            gameState = 'playing';
+            gameLoop();
+        }
+        
+        function endGame(isComplete) {
+            gameState = 'gameOver';
+            cancelAnimationFrame(animationFrameId);
+            tts.cancel();
+            
+            if (isComplete) {
+                gameOverTitle.textContent = "Mission Complete!";
+                gameOverTitle.className = "text-4xl font-bold mb-2 text-cyan-400";
+                gameOverText.textContent = `You successfully navigated the ${currentLevel.name}!`;
+            } else {
+                gameOverTitle.textContent = "Mission Failed";
+                gameOverTitle.className = "text-4xl font-bold mb-2 text-red-500";
+                gameOverText.textContent = "Your Bio-Pod has been damaged beyond repair.";
+            }
+            finalScore.textContent = `Final Score: ${score}`;
+            debriefResponse.classList.add('hidden');
+            endGameButtons.classList.remove('hidden');
+            debriefText.textContent = '';
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function returnToMenu() {
+            sound.playSound('click');
+            tts.cancel();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            gameState = 'menu';
+            canvas.classList.add('hidden');
+            hud.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        }
+
+        async function callGemini(prompt) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }], };
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) { throw new Error(`API call failed with status: ${response.status}`); }
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    return candidate.content.parts[0].text;
+                }
+                return "Sorry, I couldn't generate a response right now.";
+            } catch (error) {
+                console.error("Gemini API call error:", error);
+                return "Error connecting to the expert system.";
+            }
+        }
+        
+        askExpertBtn.addEventListener('click', async () => {
+             expertControls.classList.add('hidden');
+             expertResponse.classList.remove('hidden');
+             const loadingText = "Thinking...";
+             expertText.textContent = loadingText;
+             tts.speak(loadingText);
+             const prompt = `In simple terms for a middle school health class, explain why the answer to the question "${currentQuestion.question}" is "${currentQuestion.answers[currentQuestion.correct]}".`;
+             const explanation = await callGemini(prompt);
+             expertText.innerHTML = explanation.replace(/\n/g, '<br>');
+             tts.speak(explanation);
+        });
+        debriefBtn.addEventListener('click', async () => {
+             endGameButtons.classList.add('hidden');
+             debriefResponse.classList.remove('hidden');
+             const loadingText = "Generating debrief...";
+             debriefText.textContent = loadingText;
+             tts.speak(loadingText);
+             const prompt = `Generate a short, encouraging "mission debrief" (3-4 sentences) for a student who just played a game about the ${currentLevel.name}. Their final score was ${score}. Briefly mention one key function of this body system.`;
+             const debriefing = await callGemini(prompt);
+             debriefText.innerHTML = debriefing.replace(/\n/g, '<br>');
+             tts.speak(debriefing);
+        });
+        closeExpertBtn.addEventListener('click', () => { sound.playSound('click'); resumeGame(); });
+        continueBtn.addEventListener('click', () => { sound.playSound('click'); resumeGame(); });
+       
+        window.addEventListener('keydown', (e) => { if (keys) keys[e.key] = true; });
+        window.addEventListener('keyup', (e) => { if (keys) keys[e.key] = false; });
+        
+        function resizeCanvas() {
+            canvas.width = gameContainer.clientWidth;
+            canvas.height = gameContainer.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // This warms up the audio engine on the first user interaction.
+        document.body.addEventListener('click', () => {
+            if (!isAudioReady) {
+                 Tone.start().then(() => {
+                    sound.init();
+                });
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
+
